@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../context/AppContext'
 import { space } from 'postcss/lib/list'
 import { assets, JobCategories, JobLocations, jobsData } from '../assets/assets'
@@ -6,9 +6,42 @@ import Jobcard from './Jobcard'
 
 const JobListing = () => {
 
+    const { jobs, setjobs, issearched, searchfilter, setsearchfilter } = useContext(AppContext)
     const [showfilter, setshowfilter] = useState(false)
     const [currentpage, setcurrentpage] = useState(1)
-    const { jobs, setjobs, issearched, searchfilter, setsearchfilter } = useContext(AppContext)
+    const [selectedcategories, setselectedcategories] = useState([])
+    const [selectedlocations, setselectedlocations] = useState([])
+
+    const [filteredjobs, setfilteredjobs] = useState(jobs);
+    const handleCategoryChange = (category) => {
+        setselectedcategories(
+            prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+        )
+    }
+    const handleLocationsChange = (location) => {
+        setselectedlocations(
+            prev => prev.includes(location) ? prev.filter(c => c !== location) : [...prev, location]
+        )
+    }
+
+    useEffect(() => {
+        const matchesCategory = job => selectedcategories.length === 0 || selectedcategories.includes(job.category)
+        const matchesLocation = job => selectedlocations.length === 0 || selectedlocations.includes(job.location)
+        const matchesTitle = job => searchfilter.title === "" || job.title.toLowerCase().includes(searchfilter.title.toLowerCase())
+        const matchesSearchLocation = job => searchfilter.location === "" || job.location.toLowerCase().includes(searchfilter.location.toLowerCase())
+        const newFilteredJobs = jobs.slice().reverse().filter(
+            job => matchesCategory(job) && matchesLocation(job) && matchesTitle(job) && matchesSearchLocation(job)
+        )
+
+
+        setfilteredjobs(newFilteredJobs)
+        setcurrentpage(1)
+
+    }, [jobs, selectedcategories, selectedlocations, searchfilter])
+
+
+
+
     return (
         <div className='container 2xl:px-20 mx-auto flex flex-col lg:flex-row max-lg:space-y-8 py-8'>
             <div className='w-full lg:w-1/4 bg-white px-4'>
@@ -52,7 +85,7 @@ const JobListing = () => {
                         {
                             JobCategories.map((cat, i) => (
                                 <li key={i} className='flex gap-3 items-center'>
-                                    <input className='scale-125' type="checkbox" name="" id='' />
+                                    <input onChange={() => handleCategoryChange(cat)} checked={selectedcategories.includes(cat)} className='scale-125' type="checkbox" />
                                     {cat}
                                 </li>
                             ))
@@ -66,7 +99,7 @@ const JobListing = () => {
                         {
                             JobLocations.map((cat, i) => (
                                 <li key={i} className='flex gap-3 items-center'>
-                                    <input className='scale-125' type="checkbox" name="" id='' />
+                                    <input onChange={() => handleLocationsChange(cat)} checked={selectedlocations.includes(cat)} className='scale-125' type="checkbox" />
                                     {cat}
                                 </li>
                             ))
@@ -79,7 +112,7 @@ const JobListing = () => {
                 <p className='mb-8'>get your desired job from top companies</p>
                 <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'>
                     {
-                        jobs.slice((currentpage-1)*6,currentpage*6).map((job, i) => (
+                        filteredjobs.slice((currentpage - 1) * 6, currentpage * 6).map((job, i) => (
                             <Jobcard key={i} job={job} />
                         ))
                     }
@@ -87,23 +120,23 @@ const JobListing = () => {
 
 
                 {
-                    jobs.length>0 &&(
+                    filteredjobs.length > 0 && (
                         <div className='flex items-center justify-center space-x-2 mt-10'>
                             <a href="#job-list">
-                                <img onClick={()=>setcurrentpage(Math.max(currentpage-1),1)} src={assets.left_arrow_icon} alt="" />
+                                <img onClick={() => setcurrentpage(Math.max(currentpage - 1), 1)} src={assets.left_arrow_icon} alt="" />
                             </a>
                             {
-                                Array.from({length:Math.ceil(jobs.length/6)}).map((_,i)=>(
-                                    <a href='#job-list'>
+                                Array.from({ length: Math.ceil(filteredjobs.length / 6) }).map((_, i) => (
+                                    <a key={i} href='#job-list'>
 
-                                        <button onClick={()=>setcurrentpage(i+1)} className={`w-10 h-10 flex items-center justify-center border border-gray-300 rounded ${currentpage===i+1 ? 'bg-blue-100 text-blue-500' : "text-gray-500"}`}>{i+1}</button>
+                                        <button onClick={() => setcurrentpage(i + 1)} className={`w-10 h-10 flex items-center justify-center border border-gray-300 rounded ${currentpage === i + 1 ? 'bg-blue-100 text-blue-500' : "text-gray-500"}`}>{i + 1}</button>
                                     </a>
-                                        
-                                    
+
+
                                 ))
                             }
                             <a href="#job-list">
-                                <img onClick={()=> setcurrentpage(Math.min(currentpage+1,Math.ceil(jobs.length/6)))} src={assets.right_arrow_icon} alt="" />
+                                <img onClick={() => setcurrentpage(Math.min(currentpage + 1, Math.ceil(filteredjobs.length / 6)))} src={assets.right_arrow_icon} alt="" />
                             </a>
                         </div>
                     )
