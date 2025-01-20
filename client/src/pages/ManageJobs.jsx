@@ -1,11 +1,55 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { manageJobsData } from '../assets/assets'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
+import { AppContext } from '../context/AppContext'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const ManageJobs = () => {
 
   const navigate =useNavigate()
+  const [jobs,setjobs]=useState([])
+  const {backendurl,comapnytoken}=useContext(AppContext)
+  const fetchcompanyjobs=async()=>{
+    try{
+      const {data}=await axios.get(backendurl+'/api/company/list-jobs',{headers:{token:comapnytoken}})
+      if(data.success){
+        setjobs(data.jobs.reverse())
+      }
+      else{
+        toast.error(data.message)
+      }
+    }catch(error){
+      toast.error(error.message)
+    }
+  }
+
+  const changejobvisibility=async(id)=>{
+      try{
+        const {data}=await axios.post(backendurl+'/api/compnay/change-visibility',
+          {id},
+          {headers:{token:comapnytoken}}
+        )
+        if(data.success){
+          toast.success(data.message)
+          fetchcompanyjobs()
+        }else{
+          toast.error(data.message)
+        }
+      }catch(error){
+        toast.error(error.message)
+      }
+  }
+
+
+
+  useEffect(()=>{
+    if(comapnytoken){
+      fetchcompanyjobs()
+    }
+  },[comapnytoken])
+
   return (
     <div className='container p-4 max-w-5xl'>
       <div className='overflow-x-auto'>
@@ -23,7 +67,7 @@ const ManageJobs = () => {
           <tbody>
             
               {
-                manageJobsData.map((job,i)=>(
+                jobs.map((job,i)=>(
                   <tr className='text-gray-700' key={i}>
                     <td className='py-2 px-4 border-b max-sm:hidden'>{i+1}</td>
                     <td className='py-2 px-4 border-b'>{job.title}</td>
@@ -31,7 +75,7 @@ const ManageJobs = () => {
                     <td className='py-2 px-4 border-b max-sm:hidden'>{job.location}</td>
                     <td className='py-2 px-4 border-b text-center'>{job.applicants}</td>
                     <td className='py-2 px-4 border-b'>
-                      <input className='scale-125 ml-4' type="checkbox" />
+                      <input onChange={()=>changejobvisibility(job._id)} className='scale-125 ml-4' type="checkbox" checked={job.visible} />
                     </td>
                   </tr>
                 ))

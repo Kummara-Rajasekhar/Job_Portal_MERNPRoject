@@ -1,8 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { assets } from '../assets/assets'
 import { AppContext } from '../context/AppContext'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
+
 
 const RecruiterLogin = () => {
+    const navigate=useNavigate()
     const [state, setstate] = useState('Login')
     const [name, setname] = useState("")
     const [password, setpassword] = useState("")
@@ -15,8 +20,45 @@ const RecruiterLogin = () => {
         if(state==='Sign Up' && !istextdatasubmitted){
             setistextdatasubmitted(true)
         }
+
+        try{
+            if(state==="Login"){
+                const {data}=await axios.post(backendurl+'/api/company/login',{email,password})
+                if(data.success){
+                    setcompanydata(data.company)
+                    setcompanytoken(data.token)
+                    localStorage.setItem('companytoken',data.token)
+                    setshowrecruiterlogin(false)
+                    navigate('/dashboard')
+                }else{
+                    toast.error(data.message)
+                }
+            }else{
+                const formData=new FormData()
+                formData.append('name',name)
+                formData.append('password',password)
+                formData.append('email',email)
+                formData.append('image',image)
+                const {data}=await axios.post(backendurl+'/api/company/register',formData)
+                if(data.success){
+                    setcompanydata(data.company)
+                    setcompanytoken(data.token)
+                    localStorage.setItem('companytoken',data.token)
+                    setshowrecruiterlogin(false)
+                    navigate('/dashboard')
+                }else{
+                    toast.error(data.message)
+                }
+            }
+            
+        }catch(error){
+            toast.error(error.message)
+        }
+
+
+
     }
-    const {setshowrecruiterlogin}=useContext(AppContext);
+    const {setshowrecruiterlogin,backendurl,setcompanytoken,setcompanydata}=useContext(AppContext);
 
     useEffect(()=>{
         document.body.style.overflow='hidden'

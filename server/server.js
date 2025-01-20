@@ -10,6 +10,9 @@ import companyRoutes from './routes/companyRoutes.js'
 import jobRouter from './routes/companyRoutes.js'
 import userRoutes from './routes/companyRoutes.js'
 import connectCloudinary from './config/cloudinary.js'
+import {clerkMiddleware} from '@clerk/express'
+
+
 
 const app=express()
 
@@ -19,6 +22,7 @@ await connectCloudinary()
 
 app.use(cors())
 app.use(express.json())
+app.use(clerkMiddleware())
 
 app.get('/',(req,res)=> res.send("API Working"))
 

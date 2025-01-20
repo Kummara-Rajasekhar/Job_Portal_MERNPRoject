@@ -4,6 +4,7 @@ import {v2 as cloudinary} from 'cloudinary'
 import generateToken from "../utils/generateToken";
 import { messageInRaw } from "svix";
 import Job from "../models/Job";
+import JobApplication from "../models/JobApplication";
 
 
 export const registerCompany= async(req,res)=>{
@@ -53,7 +54,7 @@ export const loginCompany= async(req,res)=>{
     const {email,password}=req.body
     try{
         const company= await Company.findOne({email})
-        if(bcrypt.compare(password,company.password)){
+        if(await bcrypt.compare(password,company.password)){
             res.json({
                 success:true,
                 company:{
@@ -122,7 +123,11 @@ export const getCompanyPostedJobs= async(req,res)=>{
     try{
         const companyId=req.company._id
         const jobs=await Job.find(companyId)
-        res.json({success:true,jobs})
+        const jobsData=await Promise.all(jobs.map(async (job)=>{
+            const applicants=await JobApplication.findById({jobId:job._id})
+            return {...job.toObject(),applicants:applicants.length}
+        }))
+        res.json({success:true,jobsData})
     }
     catch(error){
         res.json({success:false,message:error.message})
