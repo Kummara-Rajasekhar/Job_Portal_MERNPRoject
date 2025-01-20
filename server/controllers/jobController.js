@@ -5,7 +5,7 @@ import Job from "../models/Job"
 export const getJobs=async(req,res)=>{
     try{
         const jobs= await Job.find({visible:true})
-        .populate({path:'company_d',select:'-password'})
+        .populate({path:'company_id',select:'-password'})
         res.json({success:true,jobs})
     }catch(error){
         res.json({success:false,message:error.message})
