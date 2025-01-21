@@ -1,15 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { manageJobsData } from '../assets/assets'
+import { jobsData, manageJobsData } from '../assets/assets'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import Loading from '../components/Loading'
 
 const ManageJobs = () => {
 
   const navigate =useNavigate()
-  const [jobs,setjobs]=useState([])
+  const [jobs,setjobs]=useState(false)
   const {backendurl,comapnytoken}=useContext(AppContext)
   const fetchcompanyjobs=async()=>{
     try{
@@ -50,7 +51,12 @@ const ManageJobs = () => {
     }
   },[comapnytoken])
 
-  return (
+  return jobsData  ? jobs.length===0 ? 
+  (
+  <div className='flex items-center justify-center h-[70vh]'>
+    <p className='text-xl sm:text-2xl'>No Jobs Available or Posted</p>
+  </div>)
+  :(
     <div className='container p-4 max-w-5xl'>
       <div className='overflow-x-auto'>
         <table className='min-w-full bg-white border border-gray-200 max-sm:text-sm '>
@@ -88,7 +94,8 @@ const ManageJobs = () => {
         <button onClick={()=>navigate('/dashboard/add-job')} className='bg-black text-white py-2 px-4 rounded'>Add new job</button>
       </div>
     </div>
-  )
+  ):
+  <Loading/>
 }
 
 export default ManageJobs

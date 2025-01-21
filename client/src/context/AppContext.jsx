@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from "react";
 import { jobsData } from "../assets/assets";
 import axios from "axios";
 import { toast } from "react-toastify";
+import {useAuth, useUser } from '@clerk/clerk-react'
 
 
 
@@ -18,6 +19,8 @@ export const AppContextProvider=(props)=>{
 
         }
     );
+    const {user}=useUser()
+    const {getToken}=useAuth()
     const [issearched,setissearched]=useState(false)
     const [jobs,setjobs]=useState([])
     const [showrecruiterlogin,setshowrecruiterlogin]=useState(false)
@@ -26,6 +29,7 @@ export const AppContextProvider=(props)=>{
     const [companydata,setcompanydata]=useState(null)
     const backendurl=import.meta.env.VITE_BACKEND_URL
     const [userdata,setuserdata]=useState(null)
+    const [userapplication,setuserapplcations]=useState([])
 
 
     const fetchjobs=async() =>{
@@ -56,6 +60,29 @@ export const AppContextProvider=(props)=>{
         }
     }
 
+    const fetchuserdata=async()=>{
+        try{
+            const token=await getToken();
+            const {data}=await axios.get(backendurl+'/api/users/user',{headers:{Authorization:`Bearer ${token}`}})
+            if(data.success){
+                setuserdata(data.user);
+
+            }else{
+                toast.error(data.message)
+            }
+        }catch(erro){
+            toast.error(error.message)
+
+        }
+    }
+
+    useEffect(()=>{
+        if(user){
+            fetchuserdata()
+            fetchuserapplications()
+        }
+    },[user])
+
     useEffect(()=>{
         if(companytoken){
             fetchcompanydata()
@@ -71,6 +98,24 @@ export const AppContextProvider=(props)=>{
         }
     },[])
 
+
+    const fetchuserapplications=async()=>{
+        try{
+            const token=await getToken()
+            const {data}=await axios.get(backendurl+'/api/users/applications',
+                {headers:{Authorization:`Bearer ${token}`}}
+            )
+            if(data.success){
+                setuserapplcations(data.applications)
+            }
+            else{
+                toast.error(data.message)
+            }
+        }catch(error){
+            toast.error(error.message)
+        }
+    }
+
     const value={
         searchfilter,
         setsearchfilter,
@@ -85,6 +130,11 @@ export const AppContextProvider=(props)=>{
         companytoken,
         setcompanydata,
         backendurl,
+        userdata,
+        setuserdata,
+        userapplication,
+        setuserapplcations,
+        fetchuserapplications
 
 
     }
